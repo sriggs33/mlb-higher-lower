@@ -2,8 +2,8 @@
 //
 // Format (modelled on HLTV-style higher/lower): two players side by side, the left one's stat
 // is shown, you call whether the right one's is higher or lower. The left player is "on top"
-// and stays there, facing a new challenger each guess, until a challenger has a higher number
-// (the challenger takes over) or they've faced their 3–4 challengers (the latest challenger
+// and stays there, facing a new challenger each guess, until a challenger has a better number
+// (higher, or lower for ERA/WHIP-type stats; the challenger takes over) or they've faced their 3–4 challengers (the latest challenger
 // steps in). The stat stays the same for STAT_BLOCK guesses, then switches. You have LIVES
 // lives: a miss costs one and play continues; the run ends on the last miss (or when the
 // chain runs out). Score = correct calls.
@@ -15,7 +15,7 @@ export const ENDLESS_ROUNDS = 200;
 export const STAT_BLOCK = 3; // guesses per stat before it switches
 export const LIVES = 3;
 export const REIGN = [3, 4]; // a player on top faces between 3 and 4 challengers at most
-export const PUZZLE_VERSION = 2; // bump when the chain rules change so stale saves are rebuilt
+export const PUZZLE_VERSION = 3; // bump when the chain rules change so stale saves are rebuilt
 export const LAUNCH_DATE = '2026-10-20';
 
 export const MODES = {
@@ -106,10 +106,14 @@ function snapshot(player, scope) {
   return { id: player.id, name: player.name, pos: player.pos, meta: scope === 'season' ? player.team : player.years };
 }
 
+/** Does value `x` beat value `y` on this stat? Ties never happen (see comparable). */
+export const beats = (def, x, y) => (def.lowerBetter ? x < y : x > y);
+
 /**
  * Build a chain of up to `length` match-ups. Round i compares rounds[i].a (on top, shown)
  * with rounds[i].b (challenger, hidden). `outcome` says what happens next:
- *   'takeover' — b had the higher number and becomes the next a
+ *   'takeover' — b had the better number (higher, or lower for ERA/WHIP-type stats) and
+ *                becomes the next a
  *   'retire'   — a has faced `reignMax` challengers, so b steps in as the next a anyway
  *   'hold'     — a stays on top and faces a new challenger
  * `reign` is which challenger (1-based) a is facing, out of `reignMax`. The stat holds for
@@ -162,7 +166,7 @@ export function buildPuzzle(pool, mode, seed, length = DAILY_ROUNDS) {
       if (!b) break; // nobody left to compare on this stat; switch stats early
       remove(b);
       reign++;
-      const takeover = b.s[def.key] > a.s[def.key];
+      const takeover = beats(def, b.s[def.key], a.s[def.key]);
       const outcome = takeover ? 'takeover' : reign >= reignMax ? 'retire' : 'hold';
       rounds.push({
         stat: def.key,

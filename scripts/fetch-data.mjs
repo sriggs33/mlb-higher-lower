@@ -8,11 +8,11 @@
 // (PA for hitters, innings/saves/Ks for pitchers), All-Star selections and the Hall of Fame,
 // so everyday players and household names show up far more often than fringe guys.
 
-import { access, mkdir, readdir, rm, writeFile } from 'node:fs/promises';
+import { mkdir, readFile, readdir, rm, writeFile } from 'node:fs/promises';
 import { dirname, join } from 'node:path';
 import { fileURLToPath } from 'node:url';
 import { parseStat, statsFor } from '../public/js/stats.js';
-import { DAILY_ROUNDS, buildPuzzle, dailySeed } from '../public/js/game.js';
+import { DAILY_ROUNDS, PUZZLE_VERSION, buildPuzzle, dailySeed } from '../public/js/game.js';
 
 const API = 'https://statsapi.mlb.com/api/v1';
 const OUT_DIR = join(dirname(fileURLToPath(import.meta.url)), '..', 'public', 'data');
@@ -282,7 +282,8 @@ async function main() {
 }
 
 // Freeze each day's puzzles ahead of time so everyone, in every timezone, plays the same
-// chain no matter when the pools were last refreshed. Existing days are never rewritten.
+// chain no matter when the pools were last refreshed. Existing days are never rewritten,
+// unless they were built under older chain rules (PUZZLE_VERSION).
 // Local dates in use span UTC-12..UTC+14, so cover yesterday through two days out.
 async function publishDailies(pools, generatedAt) {
   const dir = join(OUT_DIR, 'daily');
@@ -291,7 +292,9 @@ async function publishDailies(pools, generatedAt) {
   for (const offset of [-1, 0, 1, 2]) {
     const key = day(offset);
     const file = join(dir, `${key}.json`);
-    if (await access(file).then(() => true, () => false)) continue;
+    const existing = await readFile(file, 'utf8').then(JSON.parse, () => null);
+    const current = existing && Object.values(existing.puzzles ?? {}).every((p) => p.v === PUZZLE_VERSION);
+    if (current) continue;
     const puzzles = Object.fromEntries(
       Object.entries(pools).map(([mode, players]) => [mode, buildPuzzle(players, mode, dailySeed(key, mode), DAILY_ROUNDS)]),
     );

@@ -62,7 +62,8 @@ for (const mode of Object.keys(MODES)) {
         blockSizes.set(r.block, (blockSizes.get(r.block) ?? 0) + 1);
         assert.ok(r.reignMax >= REIGN[0] && r.reignMax <= REIGN[1], 'reign length is 3–4');
         assert.ok(r.reign >= 1 && r.reign <= r.reignMax, 'reign within limit');
-        const expected = r.b.value > r.a.value ? 'takeover' : r.reign === r.reignMax ? 'retire' : 'hold';
+        const better = def.lowerBetter ? r.b.value < r.a.value : r.b.value > r.a.value;
+        const expected = better ? 'takeover' : r.reign === r.reignMax ? 'retire' : 'hold';
         assert.equal(r.outcome, expected, 'outcome follows the higher number / reign limit');
         if (i > 0) {
           const prev = p.rounds[i - 1];

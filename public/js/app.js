@@ -213,6 +213,7 @@ function render({ slide = false } = {}) {
     <div class="statbar ${isNewStat ? 'new-stat' : ''}">
       <div class="stat-kicker">${isNewStat ? 'New stat' : 'Stat'}</div>
       <div class="stat-name">${esc(def.label)}</div>
+      ${def.lowerBetter ? '<div class="lower-better">Lower is better<span class="lb-extra"> · the lower number takes over</span></div>' : ''}
       <div class="stat-block" title="The stat switches every ${STAT_BLOCK} guesses">
         <span class="pips">${pips}</span>
         <span>${!next ? 'Final call' : lastInBlock ? 'Stat switches after this one' : `${blockLeft} left on this stat`}</span>

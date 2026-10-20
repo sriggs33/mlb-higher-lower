@@ -226,6 +226,19 @@ main {
   animation: pop 0.5s ease-out;
 }
 
+.lower-better {
+  display: table;
+  margin: 4px auto 2px;
+  padding: 3px 10px;
+  border-radius: 999px;
+  background: rgba(244, 185, 66, 0.14);
+  color: var(--gold);
+  font-size: 12px;
+  font-weight: 700;
+  letter-spacing: 0.06em;
+  text-transform: uppercase;
+}
+
 .stat-block {
   display: inline-flex;
   align-items: center;
@@ -1161,6 +1174,10 @@ kbd {
     justify-content: center;
     gap: 4px 8px;
     margin-top: 6px;
+  }
+
+  .lb-extra {
+    display: none;
   }
 
   .unit-stat {

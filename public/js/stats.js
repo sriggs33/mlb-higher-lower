@@ -8,6 +8,7 @@
 // fmt     — how to display the value (see formatStat)
 // weight  — how often the stat is picked for a round (headline stats are picked more)
 // scopes  — which pools the stat appears in ("season", "career")
+// lowerBetter — a lower number is the better one (ERA, WHIP…), so the lower player takes over
 // minTop  — optional { season, career }: at least one of the two players must reach this, so
 //           role-specific stats (saves) don't produce 0-vs-3 coin flips between starters
 
@@ -29,16 +30,16 @@ export const BATTING_STATS = [
 ];
 
 export const PITCHING_STATS = [
-  { key: 'era', api: 'era', label: 'ERA', unit: 'ERA', abbr: 'ERA', fmt: 'dec2', weight: 3, scopes: ['season', 'career'] },
+  { key: 'era', api: 'era', label: 'ERA', unit: 'ERA', abbr: 'ERA', fmt: 'dec2', lowerBetter: true, weight: 3, scopes: ['season', 'career'] },
   { key: 'so', api: 'strikeOuts', label: 'Strikeouts', unit: 'strikeouts', abbr: 'K', fmt: 'int', weight: 3, scopes: ['season', 'career'] },
   { key: 'w', api: 'wins', label: 'Wins', unit: 'wins', abbr: 'W', fmt: 'int', weight: 3, scopes: ['season', 'career'] },
-  { key: 'whip', api: 'whip', label: 'WHIP', unit: 'WHIP', abbr: 'WHIP', fmt: 'dec2', weight: 3, scopes: ['season', 'career'] },
+  { key: 'whip', api: 'whip', label: 'WHIP', unit: 'WHIP', abbr: 'WHIP', fmt: 'dec2', lowerBetter: true, weight: 3, scopes: ['season', 'career'] },
   { key: 'ip', api: 'inningsPitched', label: 'Innings Pitched', unit: 'innings pitched', abbr: 'IP', fmt: 'ip', weight: 2, scopes: ['season', 'career'] },
   { key: 'sv', api: 'saves', label: 'Saves', unit: 'saves', abbr: 'SV', fmt: 'int', weight: 1, scopes: ['season', 'career'], minTop: { season: 10, career: 50 } },
   { key: 'k9', api: 'strikeoutsPer9Inn', label: 'Strikeouts per 9', unit: 'K/9', abbr: 'K/9', fmt: 'dec2', weight: 2, scopes: ['season', 'career'] },
   { key: 'l', api: 'losses', label: 'Losses', unit: 'losses', abbr: 'L', fmt: 'int', weight: 1, scopes: ['season', 'career'] },
-  { key: 'bb9', api: 'walksPer9Inn', label: 'Walks per 9', unit: 'BB/9', abbr: 'BB/9', fmt: 'dec2', weight: 1, scopes: ['season', 'career'] },
-  { key: 'baa', api: 'avg', label: 'Opponent Batting Avg', unit: 'opponent average', abbr: 'BAA', fmt: 'rate', weight: 1, scopes: ['season', 'career'] },
+  { key: 'bb9', api: 'walksPer9Inn', label: 'Walks per 9', unit: 'BB/9', abbr: 'BB/9', fmt: 'dec2', lowerBetter: true, weight: 1, scopes: ['season', 'career'] },
+  { key: 'baa', api: 'avg', label: 'Opponent Batting Avg', unit: 'opponent average', abbr: 'BAA', fmt: 'rate', lowerBetter: true, weight: 1, scopes: ['season', 'career'] },
   { key: 'kbb', api: 'strikeoutWalkRatio', label: 'Strikeout-to-Walk Ratio', unit: 'K/BB ratio', abbr: 'K/BB', fmt: 'dec2', weight: 1, scopes: ['season', 'career'] },
   { key: 'gs', api: 'gamesStarted', label: 'Games Started', unit: 'games started', abbr: 'GS', fmt: 'int', weight: 1, scopes: ['career'] },
   { key: 'cg', api: 'completeGames', label: 'Complete Games', unit: 'complete games', abbr: 'CG', fmt: 'int', weight: 1, scopes: ['career'], minTop: { career: 10 } },
