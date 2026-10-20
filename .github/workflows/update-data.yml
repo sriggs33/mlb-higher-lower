@@ -1,0 +1,58 @@
+# Refreshes the player pools from the MLB Stats API every morning and publishes the site
+# to GitHub Pages. Enable Pages with "Source: GitHub Actions" in the repo settings.
+name: Update data & deploy
+
+on:
+  schedule:
+    - cron: '0 8 * * *' # 08:00 UTC, before US mornings
+  workflow_dispatch:
+  push:
+    branches: [main]
+
+permissions:
+  contents: write
+  pages: write
+  id-token: write
+
+concurrency:
+  group: pages
+  cancel-in-progress: false
+
+jobs:
+  build:
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v4
+      - uses: actions/setup-node@v4
+        with:
+          node-version: 22
+      - name: Fetch latest stats
+        if: github.event_name != 'push'
+        run: npm run data
+      # Tests run against the fresh pools, so bad data (e.g. an API outage) fails the job
+      # and the last good site stays up instead of deploying broken puzzles.
+      - name: Test
+        run: npm test
+      - name: Commit refreshed data
+        if: github.event_name != 'push' && github.ref == 'refs/heads/main'
+        run: |
+          git config user.name "github-actions[bot]"
+          git config user.email "41898282+github-actions[bot]@users.noreply.github.com"
+          git add public/data
+          git diff --cached --quiet && exit 0
+          git commit -m "Update player data"
+          git pull --rebase origin main
+          git push
+      - uses: actions/upload-pages-artifact@v3
+        with:
+          path: public
+
+  deploy:
+    needs: build
+    runs-on: ubuntu-latest
+    environment:
+      name: github-pages
+      url: ${{ steps.deployment.outputs.page_url }}
+    steps:
+      - id: deployment
+        uses: actions/deploy-pages@v4

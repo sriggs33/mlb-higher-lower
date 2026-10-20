@@ -1,0 +1,82 @@
+<!doctype html>
+<html lang="en">
+  <head>
+    <meta charset="utf-8" />
+    <meta name="viewport" content="width=device-width, initial-scale=1, viewport-fit=cover" />
+    <title>MLB Higher or Lower</title>
+    <meta name="description" content="A daily higher-or-lower game with real MLB player stats. Batters, pitchers, this season and all-time." />
+    <meta name="theme-color" content="#0c1f17" />
+    <link rel="icon" href="data:image/svg+xml,<svg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 100 100'><text y='.9em' font-size='90'>⚾</text></svg>" />
+    <link rel="preconnect" href="https://fonts.googleapis.com" />
+    <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin />
+    <link href="https://fonts.googleapis.com/css2?family=Oswald:wght@400;500;600;700&family=Inter:wght@400;500;600;700&display=swap" rel="stylesheet" />
+    <link rel="preconnect" href="https://img.mlbstatic.com" />
+    <link rel="stylesheet" href="css/style.css" />
+  </head>
+  <body>
+    <header class="topbar">
+      <div class="brand">
+        <span class="brand-ball" aria-hidden="true">⚾</span>
+        <div>
+          <h1>Higher <span>or</span> Lower</h1>
+          <p class="brand-sub" id="puzzle-label">MLB Daily</p>
+        </div>
+      </div>
+      <nav class="top-actions">
+        <button class="icon-btn" id="help-btn" aria-label="How to play" title="How to play">?</button>
+        <button class="icon-btn" id="stats-btn" aria-label="Your stats" title="Your stats">
+          <svg viewBox="0 0 24 24" aria-hidden="true"><path d="M4 20V10M10 20V4M16 20v-7M22 20H2" /></svg>
+        </button>
+      </nav>
+    </header>
+
+    <section class="controls" aria-label="Game mode">
+      <div class="segmented" role="tablist" id="group-tabs">
+        <button role="tab" data-group="hitting">Batters</button>
+        <button role="tab" data-group="pitching">Pitchers</button>
+      </div>
+      <div class="segmented" role="tablist" id="scope-tabs">
+        <button role="tab" data-scope="season" id="season-tab">This Season</button>
+        <button role="tab" data-scope="career">All-Time</button>
+      </div>
+      <div class="segmented small" role="tablist" id="play-tabs">
+        <button role="tab" data-play="daily">Daily</button>
+        <button role="tab" data-play="endless">Endless</button>
+      </div>
+    </section>
+
+    <main id="game" aria-live="polite">
+      <div class="loading">Loading players…</div>
+    </main>
+
+    <footer class="site-footer">
+      Stats from the MLB Stats API · <span id="data-date"></span>
+    </footer>
+
+    <dialog id="help-dialog" class="sheet">
+      <form method="dialog"><button class="close" aria-label="Close">×</button></form>
+      <h2>How to play</h2>
+      <ol class="rules">
+        <li>Two players, one stat. The player on the left shows their number.</li>
+        <li>Call it: is the player on the right <b>Higher</b> or <b>Lower</b>?</li>
+        <li>The left player <b>stays on top</b> until a challenger has a higher number, or until they've faced 3–4 challengers. Then the challenger slides over.</li>
+        <li>The stat <b>switches every 3 guesses</b>.</li>
+        <li>You have <b>3 lives</b>. Each wrong call costs one; lose all three and the run is over.</li>
+        <li>Your score is how many you got right. Matchups get tighter the deeper you go. Nail all 30 for a perfect game.</li>
+      </ol>
+      <p class="muted">Four dailies a day: Batters or Pitchers, this season or all-time. Everyone gets the same players. New puzzles at midnight. Endless mode is unlimited practice.</p>
+      <p class="muted">Keys: <kbd>↑</kbd>/<kbd>W</kbd> higher · <kbd>↓</kbd>/<kbd>S</kbd> lower · <kbd>Enter</kbd> continue</p>
+      <form method="dialog"><button class="btn primary wide">Play ball</button></form>
+    </dialog>
+
+    <dialog id="stats-dialog" class="sheet">
+      <form method="dialog"><button class="close" aria-label="Close">×</button></form>
+      <h2 id="stats-title">Your stats</h2>
+      <div id="stats-body"></div>
+    </dialog>
+
+    <div class="toast" id="toast" role="status"></div>
+
+    <script type="module" src="js/app.js"></script>
+  </body>
+</html>

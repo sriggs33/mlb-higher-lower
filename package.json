@@ -1,0 +1,15 @@
+{
+  "name": "mlb-higher-lower",
+  "version": "1.0.0",
+  "private": true,
+  "description": "Daily higher-or-lower game built on MLB player stats",
+  "type": "module",
+  "scripts": {
+    "data": "node scripts/fetch-data.mjs",
+    "dev": "node scripts/serve.mjs",
+    "test": "node --test \"test/**/*.test.mjs\""
+  },
+  "engines": {
+    "node": ">=20"
+  }
+}
