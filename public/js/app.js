@@ -20,6 +20,7 @@ import {
   summarize,
 } from './game.js';
 import { formatStat, statsFor } from './stats.js';
+import { scoresApi } from './config.js';
 
 const STORAGE_KEY = 'mlbhl:v1';
 const REVEAL_MS = 1250;
@@ -51,6 +52,9 @@ function saveStore() {
 }
 
 const store = loadStore();
+// Anonymous id so the score service can count each player once per daily.
+store.uid ??= crypto.randomUUID?.() ?? `${Date.now().toString(36)}-${Math.random().toString(36).slice(2)}`;
+store.submitted ??= {};
 
 // ---- App state --------------------------------------------------------------
 
@@ -286,8 +290,10 @@ function guess(g) {
   run.phase = 'reveal';
   if (state.play === 'daily') {
     // Record the result now, not after the reveal animation, so a reload can't lose it.
-    if (isOver(run.puzzle, run.guesses)) (store.history[run.puzzle.mode] ??= {})[state.today] = score(run.puzzle, run.guesses);
+    const over = isOver(run.puzzle, run.guesses);
+    if (over) (store.history[run.puzzle.mode] ??= {})[state.today] = score(run.puzzle, run.guesses);
     saveStore();
+    if (over) loadCommunity(state.today, run.puzzle.mode, run.guesses).catch(() => {});
   }
 
   const card = $('#card-b');
@@ -395,6 +401,7 @@ function renderOver() {
       <div class="big-streak"><span>${s}</span><small>${s >= total ? 'perfect' : isDaily ? `out of ${total}` : 'correct'}</small></div>
       <p class="result-lives" aria-label="${left} of ${LIVES} lives left">${livesHtml(left)}</p>
       <p class="result-line">${verdictLine(s, total, missed)}${run.newBest ? ' <b class="badge">New best!</b>' : ''}</p>
+      ${isDaily && scoresApi() ? '<section class="community" id="community" aria-live="polite"><p class="muted small">Loading how everyone did…</p></section>' : ''}
       ${
         miss
           ? `<div class="miss">
@@ -416,7 +423,13 @@ function renderOver() {
       ${isDaily ? `<div class="other-modes"><p>Other dailies</p>${otherModes}</div>` : ''}
       <details class="recap"><summary>Every call (${run.guesses.length})</summary><ol>${recap}</ol></details>
     </section>`;
-  if (isDaily) tickCountdown();
+  if (isDaily) {
+    tickCountdown();
+    const day = state.today;
+    loadCommunity(day, m, run.guesses)
+      .then((dist) => renderCommunity(dist, day, m, s))
+      .catch(() => renderCommunity(null, day, m, s));
+  }
 }
 
 let countdownTimer = null;
@@ -461,6 +474,94 @@ function renderStats() {
     <p class="muted small">Longest day streak: ${sum.maxDayStreak}. Stats are saved in this browser.</p>`;
 }
 
+// ---- Everyone's scores --------------------------------------------------------
+
+// `${day}|${mode}` -> { dist, at, pending }
+const community = new Map();
+
+/**
+ * Send this player's finished daily (once) and get back everyone's distribution. Already
+ * submitted? Just fetch the latest distribution. Results are reused for 30 seconds.
+ */
+function loadCommunity(day, m, guesses) {
+  const api = scoresApi();
+  if (!api) return Promise.reject(new Error('scores disabled'));
+  const key = `${day}|${m}`;
+  const cached = community.get(key);
+  if (cached?.pending) return cached.pending;
+  if (cached?.dist && Date.now() - cached.at < 30000) return Promise.resolve(cached.dist);
+
+  const request = store.submitted[key]
+    ? fetch(`${api}/api/distribution?date=${day}&mode=${m}`)
+    : fetch(`${api}/api/score`, {
+        method: 'POST',
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify({ date: day, mode: m, uid: store.uid, guesses }),
+      });
+  const pending = request
+    .then(async (res) => {
+      if (!res.ok) throw new Error(`scores ${res.status}`);
+      const dist = await res.json();
+      if (!store.submitted[key]) {
+        store.submitted[key] = true;
+        saveStore();
+      }
+      community.set(key, { dist, at: Date.now() });
+      return dist;
+    })
+    .catch((err) => {
+      community.delete(key);
+      throw err;
+    });
+  community.set(key, { pending });
+  return pending;
+}
+
+/** Share of *other* players who scored strictly lower. */
+function percentBetter(dist, mine) {
+  const below = dist.counts.slice(0, mine).reduce((a, b) => a + b, 0);
+  const others = dist.total - 1;
+  return others > 0 ? Math.round((below / others) * 100) : 0;
+}
+
+function renderCommunity(dist, day, m, mine) {
+  const el = $('#community');
+  // The player may have moved on to another mode while this was loading.
+  if (!el || state.run?.puzzle.mode !== m || state.today !== day) return;
+  if (!dist) {
+    el.innerHTML = `<p class="muted small">Couldn't load everyone's scores right now.</p>`;
+    return;
+  }
+  const { total, counts } = dist;
+  const fmt = (n) => n.toLocaleString();
+  if (total <= 1) {
+    el.innerHTML = `<p class="community-first">You're the first to finish this one today. Check back later to see how you stack up.</p>`;
+    return;
+  }
+  const pct = percentBetter(dist, mine);
+  const tied = Math.max(0, counts[mine] - 1);
+  const max = Math.max(...counts);
+  const bars = counts
+    .map((n, s) => {
+      const tip = `${s} correct · ${fmt(n)} player${n === 1 ? '' : 's'}`;
+      return `<div class="hcol ${s === mine ? 'mine' : ''}" tabindex="0" aria-label="${tip}" data-tip="${tip}">
+        ${s === mine ? '<span class="you">You</span>' : ''}
+        <div class="hbar" style="--h:${n ? Math.max(3, (n / max) * 100) : 0}%"></div>
+      </div>`;
+    })
+    .join('');
+  el.innerHTML = `
+    <div class="community-head">
+      <div class="pct"><b>${pct}%</b><span>of players scored lower than you</span></div>
+      <p class="muted small">${fmt(total)} played today${tied ? ` · ${fmt(tied)} tied you` : ''}</p>
+    </div>
+    <div class="hist" role="img" aria-label="Distribution of today's scores; your score of ${mine} is highlighted">${bars}</div>
+    <div class="hist-axis" aria-hidden="true"><span>0</span><span>10</span><span>20</span><span>${DAILY_ROUNDS}</span></div>
+    <table class="sr-only"><caption>Players by score</caption><tr><th>Score</th><th>Players</th></tr>${counts
+      .map((n, s) => `<tr><td>${s}</td><td>${n}</td></tr>`)
+      .join('')}</table>`;
+}
+
 // ---- Sharing ----------------------------------------------------------------
 
 function toast(msg) {
@@ -473,11 +574,13 @@ function toast(msg) {
 
 async function share() {
   const { run } = state;
+  const dist = community.get(`${state.today}|${run.puzzle.mode}`)?.dist;
   const text = shareText({
     puzzle: run.puzzle,
     guesses: run.guesses,
     number: puzzleNumber(state.today),
     modeLabel: modeLabel(run.puzzle.mode),
+    percentile: dist && dist.total > 1 ? percentBetter(dist, score(run.puzzle, run.guesses)) : null,
     url: location.origin + location.pathname,
   });
   if (navigator.share && matchMedia('(pointer: coarse)').matches) {

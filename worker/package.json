@@ -1,0 +1,14 @@
+{
+  "name": "mlb-higher-lower-api",
+  "private": true,
+  "type": "module",
+  "scripts": {
+    "dev": "wrangler dev",
+    "deploy": "wrangler deploy",
+    "db:init": "wrangler d1 execute mlb-higher-lower --remote --file schema.sql",
+    "db:init:local": "wrangler d1 execute mlb-higher-lower --local --file schema.sql"
+  },
+  "devDependencies": {
+    "wrangler": "4.151.3"
+  }
+}

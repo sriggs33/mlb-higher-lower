@@ -35,6 +35,21 @@ npm run data    # refresh public/data/*.json from the MLB Stats API
 
 Each data run also publishes frozen daily puzzles for yesterday through two days out (`public/data/daily/YYYY-MM-DD.json`) and never rewrites a day that already exists. That way everyone in every timezone plays the same chain, even when the pools refresh mid-day. If a day's file is missing, the browser builds the same seeded puzzle from the pool. Started puzzles are also saved to local storage.
 
+## Everyone's scores
+
+When a player finishes a daily, the browser sends the run to a small Cloudflare Worker in `worker/`, which stores it in a D1 database. The browser uses an anonymous random ID, and each player counts once per day per mode. The worker recomputes the score from the guesses against the published puzzle, so it never trusts a score sent by the client. It returns the day's distribution, and the results screen shows the histogram, the player's bar, and the share of players they beat.
+
+```sh
+cd worker
+npm install
+npx wrangler login
+npx wrangler d1 create mlb-higher-lower   # paste the database_id into wrangler.toml
+npm run db:init                           # create the table
+npm run deploy                            # prints the workers.dev URL
+```
+
+Put the printed URL in `public/js/config.js` as `SCORES_API`. To develop locally, run `npm run db:init:local && npm run dev` in `worker/`, then open `http://localhost:5173/?api=http://127.0.0.1:8787`.
+
 ## Deploy
 
 It's a static site, so `public/` can be hosted anywhere. `.github/workflows/update-data.yml` refreshes the data every day at 08:00 UTC and deploys to GitHub Pages. Push to GitHub and set **Settings → Pages → Source: GitHub Actions** to turn it on.

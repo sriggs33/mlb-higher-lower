@@ -1,0 +1,8 @@
+name = "mlb-higher-lower-api"
+main = "src/index.js"
+compatibility_date = "2026-09-01"
+
+[[d1_databases]]
+binding = "DB"
+database_name = "mlb-higher-lower"
+database_id = "729a2def-31cc-4b69-aca7-c7eb823f77b2"

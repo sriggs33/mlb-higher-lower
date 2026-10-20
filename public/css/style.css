@@ -602,6 +602,170 @@ main {
   color: var(--gold);
 }
 
+/* ---- Everyone's scores (histogram) ---- */
+
+.community {
+  margin: 0 0 18px;
+  padding: 16px 16px 12px;
+  border-radius: var(--radius);
+  background: var(--panel);
+  border: 1px solid var(--line);
+}
+
+.community-head {
+  margin-bottom: 14px;
+}
+
+.community-head .small {
+  margin: 4px 0 0;
+}
+
+.community-first {
+  margin: 0;
+  color: var(--muted);
+  font-size: 14px;
+}
+
+.pct {
+  display: flex;
+  align-items: baseline;
+  justify-content: center;
+  gap: 10px;
+  flex-wrap: wrap;
+}
+
+.pct b {
+  font-family: var(--display);
+  font-size: 44px;
+  line-height: 1;
+  color: var(--chalk);
+}
+
+.pct span {
+  font-size: 15px;
+  font-weight: 600;
+  color: var(--chalk);
+}
+
+.hist {
+  position: relative;
+  display: grid;
+  grid-template-columns: repeat(31, 1fr);
+  gap: 2px;
+  height: 120px;
+  padding-top: 18px;
+  border-bottom: 1px solid var(--line);
+}
+
+/* The whole column is the hover target, not just the (often tiny) bar. */
+.hcol {
+  position: relative;
+  display: flex;
+  flex-direction: column;
+  justify-content: flex-end;
+  align-items: center;
+  height: 100%;
+  outline: none;
+  cursor: default;
+}
+
+.hbar {
+  width: 100%;
+  height: var(--h);
+  border-radius: 4px 4px 0 0;
+  background: #5f8f78;
+}
+
+.hcol.mine .hbar {
+  background: var(--gold);
+}
+
+.hcol:hover .hbar,
+.hcol:focus .hbar {
+  filter: brightness(1.25);
+}
+
+.you {
+  position: absolute;
+  top: -16px;
+  font-size: 10px;
+  font-weight: 700;
+  letter-spacing: 0.08em;
+  text-transform: uppercase;
+  color: var(--chalk);
+  white-space: nowrap;
+}
+
+.hcol:hover::after,
+.hcol:focus::after {
+  content: attr(data-tip);
+  position: absolute;
+  bottom: calc(100% + 6px);
+  left: 50%;
+  transform: translateX(-50%);
+  padding: 5px 9px;
+  border-radius: 8px;
+  background: var(--chalk);
+  color: var(--bg);
+  font-size: 12px;
+  font-weight: 600;
+  white-space: nowrap;
+  pointer-events: none;
+  z-index: 2;
+}
+
+.hcol:nth-child(-n + 4):hover::after,
+.hcol:nth-child(-n + 4):focus::after {
+  left: 0;
+  transform: none;
+}
+
+.hcol:nth-last-child(-n + 4):hover::after,
+.hcol:nth-last-child(-n + 4):focus::after {
+  left: auto;
+  right: 0;
+  transform: none;
+}
+
+.hist-axis {
+  position: relative;
+  height: 16px;
+  margin-top: 4px;
+  font-size: 11px;
+  color: var(--muted);
+}
+
+/* Tick labels sit under the centers of columns 0, 10, 20 and 30. */
+.hist-axis span {
+  position: absolute;
+  transform: translateX(-50%);
+}
+
+.hist-axis span:nth-child(1) {
+  left: calc(100% / 62);
+}
+
+.hist-axis span:nth-child(2) {
+  left: calc(100% * 21 / 62);
+}
+
+.hist-axis span:nth-child(3) {
+  left: calc(100% * 41 / 62);
+}
+
+.hist-axis span:nth-child(4) {
+  left: calc(100% * 61 / 62);
+}
+
+.sr-only {
+  position: absolute;
+  width: 1px;
+  height: 1px;
+  overflow: hidden;
+  clip: rect(0 0 0 0);
+  white-space: nowrap;
+}
+
 /* ---- Result ---- */
 
 .result {

@@ -269,11 +269,12 @@ export function emojiGrid(puzzle, guesses) {
   return groups.filter(Boolean).join(' ');
 }
 
-export function shareText({ puzzle, guesses, number, modeLabel, url }) {
+export function shareText({ puzzle, guesses, number, modeLabel, percentile, url }) {
   const s = score(puzzle, guesses);
   const total = puzzle.rounds.length;
   const result = s >= total ? `Perfect game! ${s}/${total} 🏆` : `Score: ${s}/${total} ${hearts(livesLeft(puzzle, guesses))}`;
-  return [`⚾ MLB Higher or Lower #${number}`, modeLabel, result, emojiGrid(puzzle, guesses), url]
+  const standing = percentile === null || percentile === undefined ? null : `Better than ${percentile}% of players`;
+  return [`⚾ MLB Higher or Lower #${number}`, modeLabel, result, standing, emojiGrid(puzzle, guesses), url]
     .filter(Boolean)
     .join('\n');
 }
